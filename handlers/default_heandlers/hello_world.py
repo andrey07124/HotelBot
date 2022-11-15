@@ -1,4 +1,4 @@
-from telebot.types import Message
+from telebot.types import Message  # для анотаций импортируб класс Message
 from loader import bot
 
 

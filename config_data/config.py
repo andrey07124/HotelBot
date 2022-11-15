@@ -12,5 +12,6 @@ DEFAULT_COMMANDS = (
     ('start', "Запустить бота"),
     ('help', "Вывести справку"),
     ('echo', "Повтор сообщения"),
-    ('hello_world', 'Отправляет Hello world!')
+    ('hello_world', 'Отправляет Hello world!'),
+    ('lowprice', 'Узнать топ самых дешёвых отелей')
 )
