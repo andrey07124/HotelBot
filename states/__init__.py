@@ -1,1 +1,1 @@
-from . import lowprice_information
+from . import states_information

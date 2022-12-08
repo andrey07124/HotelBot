@@ -1,10 +1,13 @@
 import requests
 from requests.exceptions import HTTPError, Timeout
+from requests.models import Response  # для аннотации
+from typing import Dict
 
 
-def request_to_api(url, headers, querystring):
+def request_to_api(url: str, headers: Dict[str, str], querystring: Dict[str, str]) -> Response:
+    """Функция для осуществления get-запросов к API сайта"""
     try:
-        response = requests.get(url, headers=headers, params=querystring, timeout=10)
+        response = requests.get(url, headers=headers, params=querystring, timeout=12)
         # использую timeout у запроса, чтобы не ждать продолжительное время ответа от сервера
         if response.status_code == requests.codes.ok:  # Проверяю статус-код прежде чем десереализовать ответ в объект
             return response
