@@ -2,8 +2,12 @@ from loader import bot
 from states.states_information import UserInfoState  # Импортирую состояния
 from telebot.types import Message
 from keyboards.inline.city_markup import city  # Импортирую кнопки
+from loguru import logger
+
+logger.add("debug.log", backtrace=True, diagnose=True, level='DEBUG', retention='1 day')
 
 
+@logger.catch
 @bot.message_handler(commands=['lowprice'])
 def lowprice(message: Message) -> None:
     """Функция-хэндлер. Сначала присваивает пользователю состояние, после того как он ввел эту команду"""

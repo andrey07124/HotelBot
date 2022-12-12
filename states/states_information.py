@@ -11,7 +11,7 @@ class UserInfoState(StatesGroup):
     photo_quantity = State()  # При положительном ответе пользователь также вводит количество
                             # необходимых фотографий (не больше заранее определённого максимума)
     searching_state = State()  # TODO наверно для lowprice/hiprice
-    distance = State()
     price_min = State()
     price_max = State()
+    distance = State()
     the_end = State()  # TODO не пойму для чего это состояние

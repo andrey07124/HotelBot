@@ -4,9 +4,9 @@ from telebot.types import Message
 from keyboards.inline.city_markup import city  # Импортирую кнопки
 
 
-@bot.message_handler(commands=['hiprice'])
-def hiprice(message: Message) -> None:
-    """Функция-хэндлер. Сначала присваивает пользователю состояние, после того как он ввел команду hiprice"""
+@bot.message_handler(commands=['highprice'])
+def highprice(message: Message) -> None:
+    """Функция-хэндлер. Сначала присваивает пользователю состояние, после того как он ввел команду highprice"""
 
     bot.set_state(message.from_user.id, UserInfoState.city_id, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:

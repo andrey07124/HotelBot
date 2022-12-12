@@ -2,6 +2,7 @@ import requests
 from requests.exceptions import HTTPError, Timeout
 from requests.models import Response  # для аннотации
 from typing import Dict
+from loguru import logger
 
 
 def request_to_api(url: str, headers: Dict[str, str], querystring: Dict[str, str]) -> Response:
@@ -13,8 +14,8 @@ def request_to_api(url: str, headers: Dict[str, str], querystring: Dict[str, str
             return response
         response.raise_for_status()  # Если запрос не успешный, сработает ошибка HTTP
     except HTTPError as http_err:
-        print(f'Ошибка HTTP {http_err}')
+        logger.exception(f'Ошибка HTTP {http_err}')
     except Timeout as time_err:
-        print(f"Время запроса иcтекло {time_err}")
+        logger.exception(f"Время запроса иcтекло {time_err}")
     except ConnectionError as err:  # TODO какие ошибки здесь описывать? И как правильно обработать?
-        print(f'Ошибка соединения {err}')
+        logger.exception(f'Ошибка соединения {err}')
