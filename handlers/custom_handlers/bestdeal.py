@@ -3,6 +3,7 @@ from states.states_information import UserInfoState  # Импортирую со
 from telebot.types import Message
 from keyboards.inline.city_markup import city  # Импортирую кнопки
 from utils.request_to_api_post import hotels_founding_bestdeal, photo_founding
+from database.db_methods import table_users_filling, table_hotels_filling, table_images_filling
 
 
 @bot.message_handler(commands=['bestdeal'])
@@ -64,19 +65,37 @@ def get_hotels_quantity(message: Message) -> None:
             data['distance'] = int(distance)
 
         hotels = hotels_founding_bestdeal(data)
-        print(hotels)
         if isinstance(hotels, list):
+            # Заполнение пользователей в БД:
+            # Вывод полного имени через call
+            user = table_users_filling(message.from_user.full_name,
+                                       message.chat.id, data['searching_state'])  # таблица № 1
             for i_hotel in hotels:
                 bot.send_message(message.from_user.id,
                                  f'Название отеля: {i_hotel["name"]}\n'
                                  f'Стоимость: {i_hotel["price"]} USD\n'
                                  f'Расстояние до центра: {i_hotel["distance_from_destination"]}\n'
                                  f'Адрес: {i_hotel["address_line"]}')
+
+                # Заполнение отелей в БД:
+                hotel_bd = table_hotels_filling(user, i_hotel["name"], i_hotel["address_line"])  # таблица № 2
+
                 if data['is_photos'] == 'yes':
                     for i_photo in photo_founding(i_hotel['hotel_id'], data):  # вывод фото
                         bot.send_message(message.from_user.id, f'{i_photo}')
+
+                        # Заполнение фото в БД:
+                        table_images_filling(hotel_bd, i_photo)  # таблица № 3
+
+            bot.delete_state(message.from_user.id, message.chat.id)  # Отмена стейтов,
+            # чтобы они не мешали следующим командам
+
         elif isinstance(hotels, str):
             bot.send_message(message.from_user.id, hotels)  # выводит что не найдено
+            bot.delete_state(message.from_user.id, message.chat.id)  # Отмена стейтов,
+            # чтобы они не мешали следующим командам
+
+        bot.set_state(message.from_user.id, None, message.chat.id)
 
     else:  # Если введено не число, повторяю запрос
         bot.send_message(message.from_user.id,

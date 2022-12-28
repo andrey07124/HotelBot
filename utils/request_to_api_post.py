@@ -20,7 +20,7 @@ def pretty(obj: json) -> None:
 def request_to_api_post(url: str, headers: Dict[str, str], payload: Dict[str, str]) -> Response:
     """Функция для осуществления get-запросов к API сайта"""
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=12)
+        response = requests.post(url, headers=headers, json=payload, timeout=14)
         # использую timeout у запроса, чтобы не ждать продолжительное время ответа от сервера
         if response.status_code == requests.codes.ok:  # Проверяю статус-код прежде чем десереализовать ответ в объект
             return response
@@ -223,30 +223,35 @@ def hotels_founding_bestdeal(state_data: dict):  # Union[str, List[Dict[Union[st
     response: Response = request_to_api_post(url, headers, payload)  # вызов общей функции для post-запросов
 
     hotels = []
-    if len(response.text) > 0:
-        response: dict = response.json()  # Десериализация JSON.
-        data: dict = response.get('data', {})  # Этапы (уровни) смотрел в RapidApi (data->propertySearch->properties)
-        property_search: dict = data.get('propertySearch', {})
-        # Ошибку нигде не вернет, если что вернет пустые словари и список
-        properties: list = property_search.get('properties', [])
-        if len(properties) > 0:
-            # pretty(properties)  # красивый вывод словаря
-            for i_hotel in properties:
-                if i_hotel['destinationInfo']['distanceFromDestination']['unit'] == 'MILE':  # расстояние до центра
-                    distance_from_destination = i_hotel['destinationInfo']['distanceFromDestination'][
-                                                    'value'] * 1.609344
-                else:
-                    distance_from_destination = i_hotel['destinationInfo']['distanceFromDestination']['value']
-                if distance_from_destination < state_data['distance']:
-                    current_hotel = {'name': i_hotel['name'],
-                                     'price': i_hotel['price']['lead']['amount'],
-                                     'distance_from_destination': distance_from_destination,
-                                     'hotel_id': i_hotel['id']}
-                    current_hotel.update(address_founding(i_hotel['id']))  # вызов функции для парсинга detail
-                    hotels.append(current_hotel)
-                else:
-                    break
-    else:
-        hotels = 'Отели не найдены'
+    try:
+        if len(response.text) > 0:
+            response: dict = response.json()  # Десериализация JSON.
+            data: dict = response.get('data', {})  # Этапы (уровни) смотрел в RapidApi (data->propertySearch->properties)
+            property_search: dict = data.get('propertySearch', {})
+            # Ошибку нигде не вернет, если что вернет пустые словари и список
+            properties: list = property_search.get('properties', [])
+            if len(properties) > 0:
+                # pretty(properties)  # красивый вывод словаря
+                for i_hotel in properties:
+                    if i_hotel['destinationInfo']['distanceFromDestination']['unit'] == 'MILE':  # расстояние до центра
+                        distance_from_destination = i_hotel['destinationInfo']['distanceFromDestination'][
+                                                        'value'] * 1.609344
+                    else:
+                        distance_from_destination = i_hotel['destinationInfo']['distanceFromDestination']['value']
+                    if distance_from_destination < state_data['distance']:
+                        current_hotel = {'name': i_hotel['name'],
+                                         'price': i_hotel['price']['lead']['amount'],
+                                         'distance_from_destination': distance_from_destination,
+                                         'hotel_id': i_hotel['id']}
+                        current_hotel.update(address_founding(i_hotel['id']))  # вызов функции для парсинга detail
+                        hotels.append(current_hotel)
+                    else:
+                        break
+        else:
+            hotels = 'Отели не найдены'
+
+    except AttributeError as attribute_err:
+        hotels = 'По заданным параметрам отелей не найдено. Попробуйте расширить параметры.'
+        logger.exception(f'Ошибка AttributeError {attribute_err}')
 
     return hotels
