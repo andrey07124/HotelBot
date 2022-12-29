@@ -6,7 +6,7 @@ from keyboards.inline.is_photos_markup import is_photo_markup
 from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
 import datetime
 from utils.request_to_api_post import hotels_founding, photo_founding
-from database.db_methods import table_users_filling, table_hotels_filling, table_images_filling, table_images_output
+from database.db_methods import table_users_filling, table_hotels_filling, table_images_filling, table_images_output, table_hotel_output
 from loguru import logger
 from keyboards.inline.pagination import send_photo_page  # Пагинатор для вывода фото
 
@@ -202,13 +202,15 @@ def get_photo_quantity(message: Message) -> None:
 
 
 @logger.catch()
-@bot.callback_query_handler(func=lambda call: call.data.split('#')[0] == 'photo')
+@bot.callback_query_handler(func=lambda call: call.data.split('#')[1] == 'photo')
 def photos_page_callback(call):
     """Функция пагинации фото"""
-    page = int(call.data.split('#')[1])
+    page = int(call.data.split('#')[2])
+    hotel_id = int(call.data.split('#')[0])
     bot.delete_message(
         call.message.chat.id,
         call.message.message_id
     )
 
+    hotel_db = table_hotel_output(hotel_id)
     send_photo_page(call.message, hotel_db, page)  # TODO хочу передать объект отеля в БД

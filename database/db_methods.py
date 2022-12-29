@@ -58,5 +58,20 @@ def table_images_output(hotel_db):
     #     query = Image.select().where(Image.hotel.id == hotel_id)
 
     logger.debug('Отобраны фотографии для вывода пагинации.')
-    logger.debug(hotel_photos)
+    logger.debug(hotel_photos)  # TODO
     return hotel_photos
+
+
+@logger.catch
+def table_hotel_output(hotel_id):
+    """
+    Функция, получает нужный отель по его id и передает его в обработчик кнопок пагинации,
+    для вывода фото отеля из таблицы images
+    """
+
+    with db:
+        # получаем отель по его id из БД
+        hotel_db = Hotel.get(Hotel.id == hotel_id)
+
+    logger.debug('Определен отель для вывода пагинации.')
+    return hotel_db
