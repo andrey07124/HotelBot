@@ -6,7 +6,12 @@ from keyboards.inline.city_markup import city  # Импортирую кнопк
 
 @bot.message_handler(commands=['highprice'])
 def highprice(message: Message) -> None:
-    """Функция-хэндлер. Сначала присваивает пользователю состояние, после того как он ввел команду highprice"""
+    """
+    Функция-хэндлер. Сначала присваивает пользователю состояние city_id, после того как он ввел команду highprice.
+    Просит указать город для поиска отелей.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
 
     bot.set_state(message.from_user.id, UserInfoState.city_id, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:

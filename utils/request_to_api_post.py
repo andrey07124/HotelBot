@@ -9,16 +9,33 @@ from loguru import logger
 
 def pretty(obj: json) -> None:
     """
-    Красивое форматирование вывода dict
-    :param obj: объект
+    Красивое форматирование вывода dict для проверки работы.
+
+    :param obj: объект.
+    :type obj: json.
     :return: None
     """
+
     json_formatted_str = json.dumps(obj, indent=4, ensure_ascii=False)
-    print(json_formatted_str)  # Проверка работы
+    print(json_formatted_str)
 
 
 def request_to_api_post(url: str, headers: Dict[str, str], payload: Dict[str, str]) -> Response:
-    """Функция для осуществления get-запросов к API сайта"""
+    """
+    Функция для осуществления get-запросов к API сайта.
+
+    :param url: url-адрес страницы.
+    :type url: str.
+    :param headers: параметры заголовков запроса.
+    :type headers: Dict[str, str].
+    :param payload: параметры запроса.
+    :type payload: Dict[str, str]
+    :return: response: ответ на запрос к странице.
+    :rtype: response: Response.
+    :exception HTTPError, Timeout, ConnectionError: вывод в консоль сообщения 
+    если в рамках запроса к API возникает ошибка.
+    """  # TODO как описывать except?
+
     try:
         response = requests.post(url, headers=headers, json=payload, timeout=14)
         # использую timeout у запроса, чтобы не ждать продолжительное время ответа от сервера
@@ -33,9 +50,15 @@ def request_to_api_post(url: str, headers: Dict[str, str], payload: Dict[str, st
         logger.exception(f'Ошибка соединения {err}')
 
 
-def hotels_founding(state_data: dict):  # Union[str, List[Dict[Union[str, float]]]]
-    # TODO Не могу правильно прописать аннотацию типов
-    """Функция, возвращает список словарей с информацией по отелю"""
+def hotels_founding(state_data: dict) -> List[Dict[str, Union[str, int]]]:
+    """
+    Функция, парсит информацию по отелю и возвращает в формате списка словарей.
+
+    :param state_data: состояния, с хранящимися в них ответами пользователя.
+    :type state_data: dict.
+    :return: hotels: информация по отелю.
+    :rtype: hotels: List[Dict[str, Union[str, int]]].
+    """
 
     url = "https://hotels4.p.rapidapi.com/properties/v2/list"
     payload = {
@@ -99,14 +122,23 @@ def hotels_founding(state_data: dict):  # Union[str, List[Dict[Union[str, float]
                                  'hotel_id': i_hotel['id']}
                 current_hotel.update(address_founding(i_hotel['id']))  # вызов функции для парсинга detail
                 hotels.append(current_hotel)
-    else:
-        hotels = 'Отели не найдены'
 
-    return hotels
+        return hotels
+
+    else:
+        logger.debug('Отели не найдены.')  # сюда можно добавить вывод сообщения,
+        # если включить в аттрибуты функции message
 
 
 def address_founding(property_id: str) -> Dict[str, str]:
-    """Функция, возвращает список словарей с адресом отеля"""
+    """
+    Функция, парсит адрес отеля и возвращает форме словаря.
+
+    :param property_id: id отеля.
+    :type property_id: str.
+    :return: hotels_detail: адрес отеля.
+    :rtype: hotels_detail: Dict[str, str].
+    """
 
     url = "https://hotels4.p.rapidapi.com/properties/v2/detail"
     payload = {
@@ -141,7 +173,16 @@ def address_founding(property_id: str) -> Dict[str, str]:
 
 
 def photo_founding(property_id: str, state_data: dict) -> List[str]:
-    """Функция, возвращает список с фотографиями отеля"""
+    """
+    Функция, парсит фото отеля и возвращает в форме списка ссылок на фотографии.
+
+    :param property_id: id отеля.
+    :type property_id: str.
+    :param state_data: состояния, с хранящимися в них ответами пользователя.
+    :type state_data: dict.
+    :return: hotels_photos: список ссылок на фотографии отеля.
+    :return: hotels_photos: List[str]
+    """
 
     url = "https://hotels4.p.rapidapi.com/properties/v2/detail"
     payload = {
@@ -177,9 +218,17 @@ def photo_founding(property_id: str, state_data: dict) -> List[str]:
     return hotels_photos
 
 
-def hotels_founding_bestdeal(state_data: dict):  # Union[str, List[Dict[Union[str, float]]]]
-    # TODO Не могу правильно прописать аннотацию типов
-    """Функция, возвращает список словарей с информацией по отелю"""
+def hotels_founding_bestdeal(state_data: dict) -> Union[List[Dict[str, Union[str, float]]], str]:
+    """
+    Функция, возвращает список словарей с информацией по отелю.
+
+    :param state_data: состояния, с хранящимися в них ответами пользователя.
+    :type state_data: dict.
+    :exception AttributeError: если ответ от API не содержит информации о найденных отелях
+     и возникает ошибка AttributeError, то отправляется сообщение, что отели не найдены.
+    :return: hotels: информация по отелю или строка либо сообщение, что отели не найдены.
+    :rtype: hotels: Union[List[Dict[str, Union[str, float]]], str].
+    """
 
     url = "https://hotels4.p.rapidapi.com/properties/v2/list"
     payload = {
@@ -226,7 +275,8 @@ def hotels_founding_bestdeal(state_data: dict):  # Union[str, List[Dict[Union[st
     try:
         if len(response.text) > 0:
             response: dict = response.json()  # Десериализация JSON.
-            data: dict = response.get('data', {})  # Этапы (уровни) смотрел в RapidApi (data->propertySearch->properties)
+            # Этапы (уровни) смотрел в RapidApi (data->propertySearch->properties)
+            data: dict = response.get('data', {})
             property_search: dict = data.get('propertySearch', {})
             # Ошибку нигде не вернет, если что вернет пустые словари и список
             properties: list = property_search.get('properties', [])
@@ -251,6 +301,7 @@ def hotels_founding_bestdeal(state_data: dict):  # Union[str, List[Dict[Union[st
             hotels = 'Отели не найдены'
 
     except AttributeError as attribute_err:
+        # в bestdeal происходит ветвление вывода сообщения в зависимости от типа hotels - list/str
         hotels = 'По заданным параметрам отелей не найдено. Попробуйте расширить параметры.'
         logger.exception(f'Ошибка AttributeError {attribute_err}')
 

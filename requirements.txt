@@ -1,4 +1,4 @@
-pyTelegramBotAPI==4.8.0
+pyTelegramBotAPI==4.9.0
 python-dotenv==0.21.0
 python-telegram-bot-calendar==1.0.5
 loguru==0.6.0

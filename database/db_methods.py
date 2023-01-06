@@ -1,11 +1,25 @@
+"""Прописаны функции, для работы с таблицами БД."""
+
 from database.database_init import db, User, Hotel, Image
 from peewee import *
 from loguru import logger
+from typing import List  # для аннотации
 
 
 @logger.catch
-def table_users_filling(name, telegram_id, command):
-    """Заполнение таблицы users"""
+def table_users_filling(name: str, telegram_id: int, command: str) -> User:
+    """
+    Заполнение таблицы users.
+
+    :param name: имя пользователя.
+    :type name: str.
+    :param telegram_id: id чата.
+    :type telegram_id: int.
+    :param command: команда, введенная пользователем.
+    :type command: str.
+    :return: user: запись в таблице users.
+    :rtype: user: User
+    """
 
     command_selection = {'PRICE_LOW_TO_HIGH': '/lowprice',
                          'PRICE_HIGH_TO_LOW': '/highprice',
@@ -17,8 +31,19 @@ def table_users_filling(name, telegram_id, command):
 
 
 @logger.catch
-def table_hotels_filling(user, hotel, address):
-    """Заполнение таблицы hotels"""
+def table_hotels_filling(user: User, hotel: str, address: str) -> Hotel:
+    """
+    Заполнение таблицы hotels.
+
+    :param user: запись в таблице users.
+    :type user: User.
+    :param hotel: название отеля.
+    :type hotel: str.
+    :param address: адрес отеля.
+    :type address: str.
+    :return: hotel_bd: запись в таблице hotels.
+    :rtype: hotel_bd: Hotel.
+    """
 
     with db:
         hotel_bd = Hotel.create(user=user, hotel=hotel, address=address)
@@ -27,8 +52,16 @@ def table_hotels_filling(user, hotel, address):
 
 
 @logger.catch
-def table_images_filling(hotel, image):
-    """Заполнение таблицы images"""
+def table_images_filling(hotel: Hotel, image: str) -> None:
+    """
+    Заполнение таблицы images.
+
+    :param hotel: запись в таблице hotels.
+    :type hotel: Hotel.
+    :param image: ссылка на фото отеля.
+    :type image: str.
+    :return: None.
+    """
 
     with db:
         Image.create(hotel=hotel, image=image)
@@ -36,8 +69,15 @@ def table_images_filling(hotel, image):
 
 
 @logger.catch
-def table_users_output(telegram_id):
-    """Функция, передающая для вывода историю таблицы users"""
+def table_users_output(telegram_id: int):  # TODO не понимаю какой тип на выходе получается.
+    """
+    Функция, передающая для вывода историю таблицы users.
+
+    :param telegram_id: id чата.
+    :type telegram_id: int.
+    :return: query: 5 последних записей истории из БД.
+    :rtype: query: ???????????
+    """
 
     with db:
         # отбираем для вывода 5 последних записей истории из БД
@@ -47,26 +87,34 @@ def table_users_output(telegram_id):
 
 
 @logger.catch
-def table_images_output(hotel_db):
-    """Функция, передающая для вывода историю таблицы images"""
+def table_images_output(hotel_db: Hotel) -> List[str]:
+    """
+    Функция, передающая для вывода историю таблицы images.
+
+    :param hotel_db: запись в таблице hotels.
+    :type hotel_db: Hotel.
+    :return: hotel_photos: список ссылок на фотографии отеля.
+    :rtype: List[str].
+    """
 
     hotel_photos = []
     for i_image in hotel_db.images:
         hotel_photos.append(i_image.image)
-    # with db:
-    #     # отбираем фото по id отеля из БД
-    #     query = Image.select().where(Image.hotel.id == hotel_id)
 
     logger.debug('Отобраны фотографии для вывода пагинации.')
-    logger.debug(hotel_photos)  # TODO
     return hotel_photos
 
 
 @logger.catch
-def table_hotel_output(hotel_id):
+def table_hotel_output(hotel_id: int) -> Hotel:
     """
     Функция, получает нужный отель по его id и передает его в обработчик кнопок пагинации,
     для вывода фото отеля из таблицы images
+
+    :param hotel_id: id отеля в БД.
+    :type hotel_id: int.
+    :return: запись в таблице hotels.
+    :rtype: Hotel.
     """
 
     with db:

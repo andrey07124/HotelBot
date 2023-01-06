@@ -1,3 +1,5 @@
+"""Общие хэндлеры для команд lowprice, highprice и bestdeal."""
+
 from loader import bot
 from states.states_information import UserInfoState
 from telebot.types import Message, CallbackQuery
@@ -6,15 +8,21 @@ from keyboards.inline.is_photos_markup import is_photo_markup
 from telegram_bot_calendar import DetailedTelegramCalendar, LSTEP
 import datetime
 from utils.request_to_api_post import hotels_founding, photo_founding
-from database.db_methods import table_users_filling, table_hotels_filling, table_images_filling, table_images_output, table_hotel_output
+from database.db_methods import table_users_filling, table_hotels_filling, table_images_filling, table_hotel_output
 from loguru import logger
 from keyboards.inline.pagination import send_photo_page  # Пагинатор для вывода фото
 
 
 @bot.callback_query_handler(func=None, state=UserInfoState.city_id)
 def city_callback(call: CallbackQuery) -> None:
-    """ Функция, ловит callback нажатой пользователем кнопки, просит ввести дату заезда
-    и устанавливает состояние arrival_date """
+    """
+    Функция-хэндлер, ловит callback нажатой пользователем кнопки и сохраняет его в стейт.
+    Просит ввести дату заселения и устанавливает состояние arrival_date.
+
+    :param call: колбек от нажатой кнопки уточнения города.
+    :type call: CallbackQuery
+    """
+
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         data['city_id'] = call.data  # сохраняем полученные данные в словарь
 
@@ -28,15 +36,26 @@ def city_callback(call: CallbackQuery) -> None:
 
 @bot.message_handler(state=UserInfoState.city_id)
 def repeat_get_city(message: Message) -> None:
-    """Функция, осуществляет повторный вызов клавиатуры выбора города при неверном вводе"""
+    """
+    Функция-хэндлер, осуществляет повторный вызов клавиатуры выбора города при неверном вводе.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
+
     bot.send_message(message.from_user.id, 'Выберите один из предложенных вариантов:',
                      reply_markup=city(message))
 
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=1))
 def get_arrival_date(call: CallbackQuery) -> None:
-    """ Функция-хэндлер. Ловит callback выбранной в календаре даты прибытия и сохраняет ее.
-    Просит ввести дату выезда из отеля """
+    """
+    Функция-хэндлер. Ловит callback выбранной в календаре даты прибытия и сохраняет ее в стейт.
+    Просит ввести дату выезда из отеля.
+
+    :param call: колбек от нажатой кнопки уточнения города.
+    :type call: CallbackQuery.
+    """
+
     today_date = datetime.date.today()
     result, key, step = DetailedTelegramCalendar(calendar_id=1, min_date=today_date, locale='ru').process(call.data)
     if not result and key:
@@ -62,8 +81,14 @@ def get_arrival_date(call: CallbackQuery) -> None:
 
 @bot.callback_query_handler(func=DetailedTelegramCalendar.func(calendar_id=2))
 def get_date_in(call: CallbackQuery) -> None:
-    """ Функция-хэндлер. Ловит callback выбранной в календаре даты выезда из отеля и сохраняет ее.
-    Просит ввести дату выезда из отеля """
+    """
+    Функция-хэндлер. Ловит callback выбранной в календаре даты выезда из отеля и сохраняет ее.
+    Просит ввести количество отелей для вывода.
+
+    :param call: колбек от нажатой кнопки уточнения города.
+    :type call: CallbackQuery.
+    """
+
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         arrival_date = data['arrival_date']
         # TODO как можно напрямую без контекстного менеджера получить значение из состояния
@@ -88,7 +113,13 @@ def get_date_in(call: CallbackQuery) -> None:
 
 @bot.message_handler(state=UserInfoState.hotels_quantity)
 def get_hotels_quantity(message: Message) -> None:
-    """Функция-хендлер. Ловит состояние hotels_quantity, записывает его значение из сообщения пользователя"""
+    """
+    Функция-хендлер. Ловит состояние hotels_quantity, сохраняет в стейт количество отелей, которые нужно вывести.
+    Спрашивает нужно ли выводить фото.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
+
     hotels_quantity = message.text
     if hotels_quantity.isdigit() and 0 < int(hotels_quantity) < 26:
         bot.send_message(message.from_user.id, 'Нужно ли показать фотографии', reply_markup=is_photo_markup())
@@ -103,9 +134,16 @@ def get_hotels_quantity(message: Message) -> None:
 
 @bot.callback_query_handler(func=None, state=UserInfoState.is_photos)
 def get_is_photo(call: CallbackQuery) -> None:
-    """Функция-хэндлер. Ловит callback нажатой пользователем кнопки, записывает нужны ли фото.
-    Если нужны - просит ввести количество фотографий для вывода, и устанавливает состояние photo_quantity.
-    Если не нужны - выводит результат."""
+    """
+    Функция-хэндлер. Ловит состояние is_photos и callback нажатой пользователем кнопки.
+    Записывает нужны ли фото в стейт. Если нужны - просит ввести количество фото для вывода,
+    и устанавливает состояние photo_quantity.
+    Если фото не нужны - выводит результат.
+
+    :param call: колбек от нажатой кнопки уточнения города.
+    :type call: CallbackQuery.
+    """
+
     with bot.retrieve_data(call.from_user.id, call.message.chat.id) as data:
         data['is_photos'] = call.data
     if call.data == 'yes':
@@ -143,7 +181,12 @@ def get_is_photo(call: CallbackQuery) -> None:
 
 @bot.message_handler(state=UserInfoState.is_photos)
 def repeat_get_city(message: Message) -> None:
-    """Функция, осуществляет повторный вызов клавиатуры по фотографиям при неверном вводе"""
+    """
+    Функция-хэндлер, осуществляет повторный вызов клавиатуры по фотографиям при неверном вводе.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
+
     bot.send_message(message.from_user.id, 'Выберите один из предложенных вариантов:',
                      reply_markup=is_photo_markup())
 
@@ -152,9 +195,12 @@ def repeat_get_city(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.photo_quantity)
 def get_photo_quantity(message: Message) -> None:
     """
-    Функция-хендлер. Ловит состояние photo_quantity, записывает количество фото из сообщения пользователя.
-    Осуществляет вывод информации по отелям
+    Функция-хендлер. Ловит состояние photo_quantity, записывает в стейт количество фото из сообщения пользователя.
+    Осуществляет вывод информации по отелям, в том числе фото с пагинацией.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
     """
+
     photo_quantity = message.text
     if photo_quantity.isdigit() and 0 < int(photo_quantity) < 26:
 
@@ -178,15 +224,15 @@ def get_photo_quantity(message: Message) -> None:
                                      f'Адрес: {i_hotel["address_line"]}')
 
                     # Заполнение БД:
-                    hotel_bd = table_hotels_filling(user_bd, i_hotel["name"], i_hotel["address_line"])  # таблица № 2
+                    hotel_db = table_hotels_filling(user_bd, i_hotel["name"], i_hotel["address_line"])  # таблица № 2
 
-                    for i_photo in photo_founding(i_hotel['hotel_id'], data):  # вывод фото
-                        # bot.send_message(message.from_user.id, f'{i_photo}')
+                    for i_photo in photo_founding(i_hotel['hotel_id'], data):
+                        # bot.send_message(message.from_user.id, f'{i_photo}') # вывод фото без пагинации
 
                         # Заполнение БД:
-                        table_images_filling(hotel_bd, i_photo)  # таблица № 3 фото
+                        table_images_filling(hotel_db, i_photo)  # таблица № 3 фото
 
-                    send_photo_page(message, hotel_bd)  # пагинация фото, начало
+                    send_photo_page(message, hotel_db)  # пагинация фото, начало
 
                 bot.delete_state(message.from_user.id, message.chat.id)  # Отмена стейтов,
                 # чтобы они не мешали следующим командам
@@ -203,14 +249,16 @@ def get_photo_quantity(message: Message) -> None:
 
 @logger.catch()
 @bot.callback_query_handler(func=lambda call: call.data.split('#')[1] == 'photo')
-def photos_page_callback(call):
-    """Функция пагинации фото"""
+def photos_page_callback(call: CallbackQuery) -> None:
+    """
+    Функция-хэндлер. Ловит callback выбранной фотографии, осуществляет пагинацию фото.
+
+    :param call: колбек от нажатой кнопки уточнения города.
+    :type call: CallbackQuery.
+    """
+
     page = int(call.data.split('#')[2])
     hotel_id = int(call.data.split('#')[0])
-    bot.delete_message(
-        call.message.chat.id,
-        call.message.message_id
-    )
 
     hotel_db = table_hotel_output(hotel_id)
-    send_photo_page(call.message, hotel_db, page)  # TODO хочу передать объект отеля в БД
+    send_photo_page(call, hotel_db, page)

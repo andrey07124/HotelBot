@@ -1,12 +1,14 @@
-from telebot.types import Message  # для анотаций импортируб класс Message
+from telebot.types import Message  # для анотаций импортирую класс Message
 from loader import bot
 
 
 @bot.message_handler(commands=['hello_world'])
 def bot_hello_world(message: Message) -> None:
-    """Функция-обработчик команды /hello_world. Посылает в ответ сообщение Hello world!
-
-    :param message: передает информацию о сообщении
-    :type: Message
     """
+    Функция-обработчик команды /hello_world. Посылает в ответ сообщение Hello world!.
+
+    :param message: передает информацию о сообщении.
+    :type: Message.
+    """
+
     bot.reply_to(message, 'Hello world!')

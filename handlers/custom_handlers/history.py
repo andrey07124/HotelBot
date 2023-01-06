@@ -3,13 +3,18 @@ from telebot.types import Message
 from loguru import logger
 from database.db_methods import table_users_output
 
-logger.add("debug.log", backtrace=True, diagnose=True, level='DEBUG', retention='1 day')
+logger.add("debug.log", backtrace=True, diagnose=True, level='DEBUG', retention='1 day')  # настройки логирования
+# TODO журнал не обновляется каждый день
 
 
 @logger.catch
 @bot.message_handler(commands=['history'])
 def history(message: Message) -> None:
-    """Функция-хэндлер. Ловит команду history и выводит историю запросов"""
+    """
+    Функция-хэндлер. Ловит команду history и выводит историю запросов.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
 
     for i_user in table_users_output(message.chat.id):
         bot.send_message(

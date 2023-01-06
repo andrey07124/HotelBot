@@ -4,11 +4,17 @@ from telebot.types import Message
 from keyboards.inline.city_markup import city  # Импортирую кнопки
 from utils.request_to_api_post import hotels_founding_bestdeal, photo_founding
 from database.db_methods import table_users_filling, table_hotels_filling, table_images_filling
+from keyboards.inline.pagination import send_photo_page
 
 
 @bot.message_handler(commands=['bestdeal'])
 def bestdeal(message: Message) -> None:
-    """Функция-хэндлер. Сначала присваивает пользователю состояние, после того как он ввел команду bestdeal"""
+    """
+    Функция-хэндлер. Сначала присваивает пользователю состояние city_id, после того как он ввел команду bestdeal.
+    Просит указать город для поиска отелей.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
 
     bot.set_state(message.from_user.id, UserInfoState.city_id, message.chat.id)
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
@@ -20,7 +26,13 @@ def bestdeal(message: Message) -> None:
 
 @bot.message_handler(state=UserInfoState.price_min)
 def get_hotels_quantity(message: Message) -> None:
-    """Функция-хендлер. Ловит состояние price_min, записывает его значение из сообщения пользователя"""
+    """
+    Функция-хендлер. Ловит состояние price_min, записывает минимальную цену из сообщения пользователя в стейт.
+    Просит ввести максимальную цену.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
+
     price_min = message.text
     if price_min.isdigit() and int(price_min) >= 0:
         bot.set_state(message.from_user.id, UserInfoState.price_max, message.chat.id)
@@ -36,7 +48,13 @@ def get_hotels_quantity(message: Message) -> None:
 
 @bot.message_handler(state=UserInfoState.price_max)
 def get_hotels_quantity(message: Message) -> None:
-    """Функция-хендлер. Ловит состояние price_max, записывает его значение из сообщения пользователя"""
+    """
+    Функция-хендлер. Ловит состояние price_max, записывает максимальную цену из сообщения пользователя в стейт.
+    Просит ввести максимальное удаление от центра.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
+    """
+
     price_max = message.text
     with bot.retrieve_data(message.from_user.id, message.chat.id) as data:
 
@@ -53,8 +71,10 @@ def get_hotels_quantity(message: Message) -> None:
 @bot.message_handler(state=UserInfoState.distance)
 def get_hotels_quantity(message: Message) -> None:
     """
-    Функция-хендлер. Ловит состояние distance, записывает его значение из сообщения пользователя.
-    Осуществляет вывод информации по отелям
+    Функция-хендлер. Ловит состояние distance, записывает максимальное удаление от центра
+    из сообщения пользователя в стейт. Осуществляет вывод информации по отелям, в том числе фото с пагинацией.
+
+    :param message: объект Message, с отправленным пользователем сообщением.
     """
 
     distance = message.text
@@ -78,14 +98,16 @@ def get_hotels_quantity(message: Message) -> None:
                                  f'Адрес: {i_hotel["address_line"]}')
 
                 # Заполнение отелей в БД:
-                hotel_bd = table_hotels_filling(user, i_hotel["name"], i_hotel["address_line"])  # таблица № 2
+                hotel_db = table_hotels_filling(user, i_hotel["name"], i_hotel["address_line"])  # таблица № 2
 
                 if data['is_photos'] == 'yes':
-                    for i_photo in photo_founding(i_hotel['hotel_id'], data):  # вывод фото
-                        bot.send_message(message.from_user.id, f'{i_photo}')
+                    for i_photo in photo_founding(i_hotel['hotel_id'], data):
+                        # bot.send_message(message.from_user.id, f'{i_photo}')  # вывод фото без пагинации
 
                         # Заполнение фото в БД:
-                        table_images_filling(hotel_bd, i_photo)  # таблица № 3
+                        table_images_filling(hotel_db, i_photo)  # таблица № 3
+
+                    send_photo_page(message, hotel_db)  # пагинация фото, начало
 
             bot.delete_state(message.from_user.id, message.chat.id)  # Отмена стейтов,
             # чтобы они не мешали следующим командам
