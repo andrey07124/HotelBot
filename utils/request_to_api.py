@@ -29,5 +29,5 @@ def request_to_api(url: str, headers: Dict[str, str], querystring: Dict[str, str
         logger.exception(f'Ошибка HTTP {http_err}')
     except Timeout as time_err:
         logger.exception(f"Время запроса иcтекло {time_err}")
-    except ConnectionError as err:  # TODO какие ошибки здесь описывать? И как правильно обработать?
+    except ConnectionError as err:
         logger.exception(f'Ошибка соединения {err}')

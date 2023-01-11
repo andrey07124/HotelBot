@@ -1,9 +1,12 @@
 """Прописаны функции, для работы с таблицами БД."""
+import peewee
+import select
 
 from database.database_init import db, User, Hotel, Image
 from peewee import *
 from loguru import logger
 from typing import List  # для аннотации
+from peewee import ModelSelect  # для аннотации
 
 
 @logger.catch
@@ -69,14 +72,14 @@ def table_images_filling(hotel: Hotel, image: str) -> None:
 
 
 @logger.catch
-def table_users_output(telegram_id: int):  # TODO не понимаю какой тип на выходе получается.
+def table_users_output(telegram_id: int) -> peewee.ModelSelect:  # TODO не уверен что верно описал тип вывода.
     """
     Функция, передающая для вывода историю таблицы users.
 
     :param telegram_id: id чата.
     :type telegram_id: int.
     :return: query: 5 последних записей истории из БД.
-    :rtype: query: ???????????
+    :rtype: query: peewee.ModelSelect.
     """
 
     with db:
